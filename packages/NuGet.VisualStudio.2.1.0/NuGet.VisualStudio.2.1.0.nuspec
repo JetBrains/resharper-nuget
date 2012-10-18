@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>NuGet.VisualStudio</id>
+    <version>2.1.0</version>
+    <authors>Outercurve Foundation</authors>
+    <owners>Outercurve Foundation</owners>
+    <licenseUrl>http://nuget.codeplex.com/license</licenseUrl>
+    <projectUrl>http://nuget.codeplex.com/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>APIs for invoking NuGet services in Visual Studio.</description>
+    <copyright>© Outercurve Foundation. All rights reserved.</copyright>
+    <tags>nuget</tags>
+  </metadata>
+</package>
