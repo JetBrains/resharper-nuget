@@ -8,7 +8,8 @@ namespace JetBrains.ReSharper.Plugins.NuGet
     {
         public void Register(VsServiceProviderComponentContainer.VsServiceMap map)
         {
-            map.QueryService<SComponentModel>().As<IComponentModel>();
+            if (!map.IsRegistered<IComponentModel>())
+                map.QueryService<SComponentModel>().As<IComponentModel>();
         }
     }
 }
