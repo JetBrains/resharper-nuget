@@ -1,7 +1,7 @@
 @echo off
 setlocal enableextensions
 
-set VERSION=7.0
+set VERSION=7.1
 set PRODUCT=ReSharper
 set BASEDIR=JetBrains\%PRODUCT%\v%VERSION%
 set PLUGIN=NuGetSupport
