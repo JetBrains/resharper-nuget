@@ -24,9 +24,10 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             return IsNuGetAssembly(moduleToReference);
         }
 
-        public bool ReferenceModuleWithType(IPsiModule module, ITypeElement typeToReference)
+        // ReSharper 7.1
+        public virtual bool ReferenceModule(IPsiModule module, IPsiModule moduleToReference)
         {
-            var assemblyModule = typeToReference.Module as IAssemblyPsiModule;
+            var assemblyModule = moduleToReference as IAssemblyPsiModule;
             var projectModule = module as IProjectPsiModule;
             if (assemblyModule == null || projectModule == null)
                 return false;
@@ -44,6 +45,11 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             }
 
             return false;
+        }
+
+        public bool ReferenceModuleWithType(IPsiModule module, ITypeElement typeToReference)
+        {
+            return ReferenceModule(module, typeToReference.Module);
         }
 
         private bool IsNuGetAssembly(IPsiModule module)

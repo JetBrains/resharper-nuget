@@ -1,9 +1,8 @@
 using System;
+using System.Collections.Generic;
 using EnvDTE;
 using JetBrains.Application;
-using JetBrains.Application.Progress;
 using JetBrains.ProjectModel;
-using JetBrains.ProjectModel.Transaction;
 using JetBrains.Threading;
 using JetBrains.Util;
 using JetBrains.VsIntegration.ProjectModel;
@@ -96,7 +95,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
 
         private IVsPackageMetadata GetPackageFromAssemblyLocation(FileSystemPath assemblyLocation)
         {
-            return vsPackageInstallerServices.GetInstalledPackages().FirstOrDefault(p => assemblyLocation.FullPath.StartsWith(p.InstallPath));
+            return vsPackageInstallerServices.GetInstalledPackages().FirstOrDefault(p => assemblyLocation.FullPath.StartsWith(p.InstallPath, StringComparison.InvariantCultureIgnoreCase));
         }
 
         private Project GetVsProject(IProject project)
