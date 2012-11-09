@@ -12,7 +12,7 @@ To install, you can download a pre-built version in the downloads section. Extra
 
 ## Version
 
-The current version is 0.2, and should be treated as a beta version. It has been tested with Visual Studio 2012 and 2012, and supports ReShaprer 6.1.1, 7.0 and 7.1 (EAP build 22)
+The current version is 0.2, and should be treated as a beta version. It has been tested with Visual Studio 2012 and 2010, and supports ReShaprer 6.1.1, 7.0 and 7.1 (EAP build 22)
 
 ## Roadmap
 
