@@ -82,7 +82,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
         {
             var projectModelAssembly = psiModule.ContainingProjectModule as IAssembly;
             if (projectModelAssembly == null)
-                return null;
+                return EmptyList<FileSystemPath>.InstanceList;
 
             // ReSharper maintains a list of unique assemblies, and each assembly keeps a track of
             // all of the file copies of itself that the solution knows about. This list of file

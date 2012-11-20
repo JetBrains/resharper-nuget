@@ -58,9 +58,9 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             get { return vsPackageInstallerServices != null && vsPackageInstaller != null; }
         }
 
-        public bool AreAnyAssemblyFilesNuGetPackages(IEnumerable<FileSystemPath> fileLocations)
+        public bool AreAnyAssemblyFilesNuGetPackages(IList<FileSystemPath> fileLocations)
         {
-            if (!IsNuGetAvailable)
+            if (!IsNuGetAvailable || fileLocations.Count == 0)
                 return false;
 
             // We're talking to NuGet via COM. Make sure we're on the UI thread
@@ -73,9 +73,9 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             return hasPackageAssembly;
         }
 
-        public string InstallNuGetPackageFromAssemblyFiles(IEnumerable<FileSystemPath> assemblyLocations, IProject project)
+        public string InstallNuGetPackageFromAssemblyFiles(IList<FileSystemPath> assemblyLocations, IProject project)
         {
-            if (!IsNuGetAvailable)
+            if (!IsNuGetAvailable || assemblyLocations.Count == 0)
                 return null;
 
             string installedAssembly = null;
