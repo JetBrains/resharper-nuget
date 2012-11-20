@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
+using System;
+using System.Collections.Generic;
 using JetBrains.Application.Progress;
 using JetBrains.ProjectModel;
+using JetBrains.ProjectModel.Model2.Assemblies.Interfaces;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.Module;
 using JetBrains.Util;
+using System.Linq;
 
 namespace JetBrains.ReSharper.Plugins.NuGet
 {
@@ -37,30 +41,26 @@ namespace JetBrains.ReSharper.Plugins.NuGet
 
         public bool CanReferenceModule(IPsiModule module, IPsiModule moduleToReference)
         {
-            return IsNuGetAssembly(moduleToReference);
+            if (!IsProjectModule(module) || !IsAssemblyModule(moduleToReference))
+                return false;
+
+            var assemblyLocations = GetAllAssemblyLocations(module);
+            return nuget.AreAnyAssemblyFilesNuGetPackages(assemblyLocations);
         }
 
         // ReSharper 7.1
-        public virtual bool ReferenceModule(IPsiModule module, IPsiModule moduleToReference)
+        public bool ReferenceModule(IPsiModule module, IPsiModule moduleToReference)
         {
-            var assemblyModule = moduleToReference as IAssemblyPsiModule;
-            var projectModule = module as IProjectPsiModule;
-            if (assemblyModule == null || projectModule == null)
+            if (!IsProjectModule(module) || !IsAssemblyModule(moduleToReference))
                 return false;
 
-            if (nuget.InstallAssemblyAsNuGetPackage(assemblyModule.Assembly.Location, projectModule.Project))
-            {
-                // TODO: I wish we didn't have to do this
-                // When NuGet references the assemblies, they are queued up to be processed, but after
-                // this method completes. Which means the import type part of the process fails to find
-                // the type to import. We force an update which works through the system early. It would
-                // be nice to find out if we can process the proper import notifications instead
-                using (var cookie = module.GetSolution().CreateTransactionCookie(DefaultAction.Commit, "ReferenceModuleWithType", NullProgressIndicator.Instance))
-                    cookie.AddModuleReference(projectModule.Project, assemblyModule.ContainingProjectModule);
-                return true;
-            }
+            var assemblyLocations = GetAllAssemblyLocations(moduleToReference);
+            var projectModule = (IProjectPsiModule)module;
+            var packageLocation = nuget.InstallNuGetPackageFromAssemblyFiles(assemblyLocations, projectModule.Project);
 
-            return false;
+            PokeReSharpersAssemblyReferences(module, assemblyLocations, packageLocation, projectModule);
+
+            return !string.IsNullOrEmpty(packageLocation);
         }
 
         public bool ReferenceModuleWithType(IPsiModule module, ITypeElement typeToReference)
@@ -68,13 +68,52 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             return ReferenceModule(module, typeToReference.Module);
         }
 
-        private bool IsNuGetAssembly(IPsiModule module)
+        private static bool IsProjectModule(IPsiModule module)
         {
-            var assemblyModule = module as IAssemblyPsiModule;
-            if (assemblyModule == null)
-                return false;
+            return module is IProjectPsiModule;
+        }
 
-            return nuget.IsNuGetPackageAssembly(assemblyModule.Assembly.Location);
+        private static bool IsAssemblyModule(IPsiModule module)
+        {
+            return module is IAssemblyPsiModule;
+        }
+
+        private static IList<FileSystemPath> GetAllAssemblyLocations(IPsiModule psiModule)
+        {
+            var projectModelAssembly = psiModule.ContainingProjectModule as IAssembly;
+            if (projectModelAssembly == null)
+                return null;
+
+            // ReSharper maintains a list of unique assemblies, and each assembly keeps a track of
+            // all of the file copies of itself that the solution knows about. This list of file
+            // locations includes sources for references (including NuGet packages), but can also
+            // include outputs, e.g. if CopyLocal is set to True. The IAssemblyPsiModule.Assembly.Location
+            // returns back the file location of the first copy of the assembly, but the order of
+            // the list is undefined - it is entirely possible to get back a file location in a bin\Debug
+            // folder. This doesn't help us when trying to add NuGet references - we need to look
+            // at all of the locations to try and find the NuGet package location. So we use the
+            // ProjectModel instead of the PSI, and get all file locations of the IAssembly
+            return (from f in projectModelAssembly.GetFiles()
+                    select f.Location).ToList();
+        }
+
+        private static void PokeReSharpersAssemblyReferences(IPsiModule module, IEnumerable<FileSystemPath> assemblyLocations, string packageLocation,
+                                                             IProjectPsiModule projectModule)
+        {
+            if (string.IsNullOrEmpty(packageLocation))
+                return;
+
+            // TODO: I wish we didn't have to do this
+            // When NuGet references the assemblies, they are queued up to be processed, but after
+            // this method completes. Which means the import type part of the process fails to find
+            // the type to import. We force an update which works through the system early. It would
+            // be nice to find out if we can process the proper import notifications instead
+            using (var cookie = module.GetSolution().CreateTransactionCookie(DefaultAction.Commit, "ReferenceModuleWithType", NullProgressIndicator.Instance))
+            {
+                var assemblyLocation = assemblyLocations.FirstOrDefault(l => l.FullPath.StartsWith(packageLocation, StringComparison.InvariantCultureIgnoreCase));
+                if (!assemblyLocation.IsNullOrEmpty())
+                    cookie.AddAssemblyReference(projectModule.Project, assemblyLocation);
+            }
         }
     }
 }

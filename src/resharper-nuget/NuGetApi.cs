@@ -15,6 +15,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using EnvDTE;
 using JetBrains.Application;
 using JetBrains.ProjectModel;
@@ -57,60 +58,59 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             get { return vsPackageInstallerServices != null && vsPackageInstaller != null; }
         }
 
-        public bool IsNuGetPackageAssembly(FileSystemPath location)
-        {
-            return IsNuGetAvailable && IsPackageAssembly(location);
-        }
-
-        private bool IsPackageAssembly(FileSystemPath location)
-        {
-            // We're talking to NuGet via COM. Make sure we're on the UI thread
-            var isPackageAssembly = false;
-            threading.Dispatcher.Invoke("NuGet", () =>
-                {
-                    isPackageAssembly = GetPackageFromAssemblyLocation(location) != null;
-                });
-
-            return isPackageAssembly;
-        }
-
-        public bool InstallAssemblyAsNuGetPackage(FileSystemPath assemblyLocation, IProject project)
+        public bool AreAnyAssemblyFilesNuGetPackages(IEnumerable<FileSystemPath> fileLocations)
         {
             if (!IsNuGetAvailable)
                 return false;
 
-            var installed = false;
-
-            // We talking to NuGet via COM. Make sure we're on the UI thread
+            // We're talking to NuGet via COM. Make sure we're on the UI thread
+            var hasPackageAssembly = false;
             threading.Dispatcher.Invoke("NuGet", () =>
                 {
-                    installed = DoInstallAssemblyAsNuGetPackage(assemblyLocation, project);
+                    hasPackageAssembly = GetPackageFromAssemblyLocations(fileLocations) != null;
                 });
 
-            return installed;
+            return hasPackageAssembly;
         }
 
-        private bool DoInstallAssemblyAsNuGetPackage(FileSystemPath assemblyLocation, IProject project)
+        public string InstallNuGetPackageFromAssemblyFiles(IEnumerable<FileSystemPath> assemblyLocations, IProject project)
         {
-            var metadata = GetPackageFromAssemblyLocation(assemblyLocation);
-            if (metadata == null)
-                return false;
+            if (!IsNuGetAvailable)
+                return null;
 
-            var vsProject = GetVsProject(project);
-            if (vsProject == null)
-                return false;
+            string installedAssembly = null;
+
+            // We're talking to NuGet via COM. Make sure we're on the UI thread
+            threading.Dispatcher.Invoke("NuGet", () =>
+                {
+                    var vsProject = GetVsProject(project);
+                    if (vsProject != null)
+                        installedAssembly = DoInstallAssemblyAsNuGetPackage(assemblyLocations, vsProject);
+                });
+
+            return installedAssembly;
+        }
+
+        private string DoInstallAssemblyAsNuGetPackage(IEnumerable<FileSystemPath> assemblyLocations, Project vsProject)
+        {
+            var metadata = GetPackageFromAssemblyLocations(assemblyLocations);
+            if (metadata == null)
+                return null;
 
             // Passing in the package's install path and a null version is enough for NuGet to install the existing
             // package into the current project
             // TODO: Need to add some error handling here. What can go wrong?
             vsPackageInstaller.InstallPackage(metadata.InstallPath, vsProject, metadata.Id, (Version) null, false);
 
-            return true;
+            return metadata.InstallPath;
         }
 
-        private IVsPackageMetadata GetPackageFromAssemblyLocation(FileSystemPath assemblyLocation)
+        private IVsPackageMetadata GetPackageFromAssemblyLocations(IEnumerable<FileSystemPath> assemblyLocations)
         {
-            return vsPackageInstallerServices.GetInstalledPackages().FirstOrDefault(p => assemblyLocation.FullPath.StartsWith(p.InstallPath, StringComparison.InvariantCultureIgnoreCase));
+            return (from p in vsPackageInstallerServices.GetInstalledPackages()
+                    from l in assemblyLocations
+                    where l.FullPath.StartsWith(p.InstallPath, StringComparison.InvariantCultureIgnoreCase)
+                    select p).FirstOrDefault();
         }
 
         private Project GetVsProject(IProject project)
