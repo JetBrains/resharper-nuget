@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using EnvDTE;
 using JetBrains.Application;
+using JetBrains.Application.Components;
 using JetBrains.ProjectModel;
 using JetBrains.Threading;
 using JetBrains.Util;
@@ -28,7 +29,9 @@ using System.Linq;
 
 namespace JetBrains.ReSharper.Plugins.NuGet
 {
-    [ShellComponent]
+    // We depend on IComponentModel, which lives in a VS assembly, so tell ReSharper
+    // that we can only load as part of a VS addin
+    [ShellComponent(ProgramConfigurations.VS_ADDIN)]
     public class NuGetApi
     {
         private readonly VSSolutionManager vsSolutionManager;

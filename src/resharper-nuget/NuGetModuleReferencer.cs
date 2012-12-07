@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using JetBrains.Application.Components;
 using JetBrains.Application.Progress;
 using JetBrains.ProjectModel;
 using JetBrains.ProjectModel.Model2.Assemblies.Interfaces;
@@ -26,7 +27,11 @@ using System.Linq;
 
 namespace JetBrains.ReSharper.Plugins.NuGet
 {
-    [ModuleReferencer(Priority = NuGetModuleReferencerPriority)]
+    // We need to tell ReSharper's component model that we can only run as a VS addin,
+    // because we depend on an object that depends on an interface that is only available
+    // in Visual Studio. In other words, If we rely on a component marked VS_ADDIN, we
+    // must also be marked VS_ADDIN
+    [ModuleReferencer(ProgramConfigurations = ProgramConfigurations.VS_ADDIN, Priority = NuGetModuleReferencerPriority)]
     public class NuGetModuleReferencer : IModuleReferencer
     {
         // Must be greater than GenericModuleReferencer's priority
