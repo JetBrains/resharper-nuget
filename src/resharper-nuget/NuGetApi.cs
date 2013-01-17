@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using EnvDTE;
 using JetBrains.Application;
 using JetBrains.Application.Components;
@@ -100,11 +101,12 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             if (metadata == null)
                 return null;
 
-            // Passing in the package's install path and a null version is enough for NuGet to install the existing
-            // package into the current project
-            // TODO: Need to add some error handling here. What can go wrong?
-            vsPackageInstaller.InstallPackage(metadata.InstallPath, vsProject, metadata.Id, (Version) null, false);
-
+            // We need to get the repository path from the installed package. Sadly, this means knowing that
+            // the package is installed one directory below the repository. Just a small crack in the black box.
+            // (We can pass "All" as the package source, rather than the repository path, but that would give
+            // us an aggregate of the current package sources, rather than using the local repo as a source)
+            var repositoryPath = Path.GetDirectoryName(metadata.InstallPath);
+            vsPackageInstaller.InstallPackage(repositoryPath, vsProject, metadata.Id, (Version)null, false);
             return metadata.InstallPath;
         }
 
