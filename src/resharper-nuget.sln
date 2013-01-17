@@ -1,8 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "resharper-nuget.7.0", "resharper-nuget\resharper-nuget.7.0.csproj", "{7AF55DF9-33DA-4E50-B6E5-ADE407376D4E}"
-EndProject
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "resharper-nuget.7.1", "resharper-nuget\resharper-nuget.7.1.csproj", "{171609ED-2DB8-4682-9B2E-ACEDD4E6DC2A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "resharper-nuget.6.1", "resharper-nuget\resharper-nuget.6.1.csproj", "{19452C74-3DF5-4A78-9D7A-2F75776FFB56}"
@@ -13,10 +11,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{7AF55DF9-33DA-4E50-B6E5-ADE407376D4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7AF55DF9-33DA-4E50-B6E5-ADE407376D4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7AF55DF9-33DA-4E50-B6E5-ADE407376D4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7AF55DF9-33DA-4E50-B6E5-ADE407376D4E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{171609ED-2DB8-4682-9B2E-ACEDD4E6DC2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{171609ED-2DB8-4682-9B2E-ACEDD4E6DC2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{171609ED-2DB8-4682-9B2E-ACEDD4E6DC2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
