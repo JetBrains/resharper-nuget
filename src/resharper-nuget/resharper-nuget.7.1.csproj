@@ -48,10 +48,12 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
@@ -65,10 +67,17 @@
     <Compile Include="NuGetApi.cs" />
     <Compile Include="NuGetModuleReferencer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Updates\PluginLocalEnvironmentInfo.cs" />
+    <Compile Include="Updates\UpdatesNotifier.cs" />
     <Compile Include="VsServiceMapExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\updates.xslt">
+      <Link>updates.xslt</Link>
+    </Content>
   </ItemGroup>
   <PropertyGroup>
     <ReSharperSdkTargets Condition=" '$(ReSharperSdkTargets)' == '' ">$(MSBuildExtensionsPath)\JetBrains\ReSharper.SDK\v7.1</ReSharperSdkTargets>
