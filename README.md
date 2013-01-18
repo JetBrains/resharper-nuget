@@ -1,8 +1,25 @@
 # resharper-nuget
 
-This plugin for ReSharper adds support for NuGet references to ReSharper.
+This plugin for ReSharper adds support for NuGet references to ReSharper. It supports ReSharper 7.1 and 6.1.
 
-Once installed, when ReSharper tries to import a type from an assembly referenced by another project, and that assembly is a NuGet package, then ReSharper will use NuGet to add the reference, correctly updating packages.config, running any .ps1 scripts and installing any required dependencies.
+## What does it do? ##
+
+ReSharper has a Context Action on undefined types that looks at assemblies referenced in other projects for that type. If it finds a match, it will add a reference to the assembly, and import the namespace, fixing up the undefined error.
+
+However, ReSharper always adds the assembly as a file reference, even if the assembly is part of a NuGet package. This means NuGet's referencing is bypassed, and the packages.config file isn't updated, dependencies aren't installed, and things don't work when it's time to update the package.
+
+This plugin makes ReSharper invoke NuGet when adding a reference to an assembly in a NuGet package.
+
+## How do I get it? ##
+
+If you wish to just install a copy of the plugins without building yourself:
+
+- Visit the [downloads section on GitHub](https://github.com/JetBrains/resharper-nuget/downloads)
+- Download the latest zip file
+- Extract everything
+- Run the appropriate batch file for your version of ReSharper, e.g. Install-NuGetSupport.7.1.bat for ReSharper 7.1, or Install-NuGetSupport.6.0.bat for ReSharper 6.0
+
+## How does it work? ##
 
 From the end user's perspective, there is no noticeable user interface. When you use a type that lives in an assembly that is not part of the assemblies currently referenced, but is in an assembly referenced by other projects in the solution, ReSharper will mark the type as an error, and display the context action icon when the cursor is on the type name (the red light bulb). Pressing Alt-Enter displays the action "reference 'asm' and use 'Asm.Type'". This plugin hooks into that process. Selecting that action for an assembly referenced as part of a NuGet package will be installed by NuGet.
 
@@ -24,26 +41,19 @@ project. NuGet adds the references, updates the packages.config file, and also i
 
 ## Building ##
 
-To build the source, you need the [ReSharper 7 SDK](http://www.jetbrains.com/resharper/download/index.html) installed (ReSharper 6.1.1 support requires the [ReSharper 6.1 SDK, which can be downloaded from the previous versions archive](http://devnet.jetbrains.net/docs/DOC-280)). Then just open the resharper-nuget.sln file and build.
-
-## Installing
-
-If you wish to just install a copy of the plugins without building yourself:
-
-- Visit the [downloads section on GitHub](https://github.com/JetBrains/resharper-nuget/downloads)
-- Download the latest zip file
-- Extract everything
-- Run the appropriate batch file for your version of ReSharper, e.g. Install-NuGetSupport.7.0.bat for ReSharper 7.0
+To build the source, you need the [ReSharper 7.1 SDK](http://www.jetbrains.com/resharper/download/index.html) installed (ReSharper 6.1.1 support requires the [ReSharper 6.1 SDK, which can be downloaded from the previous versions archive](http://devnet.jetbrains.net/docs/DOC-280)). Then just open the src\resharper-nuget.sln file and build.
 
 ## Version
 
-The current version is 0.2, and should be treated as a beta version. It has been tested with Visual Studio 2012 and 2010, and supports ReShaprer 6.1.1, 7.0 and 7.1 (EAP build 22)
+The current version is 1.1. It has been tested with Visual Studio 2012 and 2010, and supports ReSharper 7.1.1 and 6.1.1.
 
 ## Contributing ##
 
-Feel free to raise issues on GitHub, or [fork the project](http://help.github.com/fork-a-repo/) and [send a pull request](http://help.github.com/send-pull-requests/).
+Feel free to [raise issues on GitHub](https://github.com/JetBrains/resharper-nuget/issues), or [fork the project](http://help.github.com/fork-a-repo/) and [send a pull request](http://help.github.com/send-pull-requests/).
 
 ## Roadmap
 
-Please see the Issues tab on JetBrains' GitHub page.
+Please see the [Issues tab on JetBrains' GitHub page](https://github.com/JetBrains/resharper-nuget/issues).
 
+
+
