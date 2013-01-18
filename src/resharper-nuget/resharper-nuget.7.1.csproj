@@ -61,6 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExposeNuGetServices.cs" />
+    <Compile Include="Hacks.cs" />
     <Compile Include="NuGetApi.cs" />
     <Compile Include="NuGetModuleReferencer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -53,7 +53,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             }
             catch (Exception e)
             {
-                // NuGet isn't installed
+                Logger.LogException("Unable to get NuGet interfaces. Is NuGet installed?", e);
             }
         }
 
@@ -71,28 +71,41 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             var hasPackageAssembly = false;
             threading.Dispatcher.Invoke("NuGet", () =>
                 {
-                    hasPackageAssembly = GetPackageFromAssemblyLocations(fileLocations) != null;
+                    hasPackageAssembly = Logger.Catch(() => GetPackageFromAssemblyLocations(fileLocations) != null);
                 });
 
             return hasPackageAssembly;
         }
 
-        public string InstallNuGetPackageFromAssemblyFiles(IList<FileSystemPath> assemblyLocations, IProject project)
+        // Yeah, that's an out parameter. Bite me.
+        public bool InstallNuGetPackageFromAssemblyFiles(IList<FileSystemPath> assemblyLocations, IProject project, out string installedLocation)
         {
-            if (!IsNuGetAvailable || assemblyLocations.Count == 0)
-                return null;
+            installedLocation = null;
 
-            string installedAssembly = null;
+            if (!IsNuGetAvailable || assemblyLocations.Count == 0)
+                return false;
 
             // We're talking to NuGet via COM. Make sure we're on the UI thread
-            threading.Dispatcher.Invoke("NuGet", () =>
+            string location = null;
+            threading.Dispatcher.Invoke("NuGet", () => Logger.Catch(() =>
                 {
+// ReSharper disable RedundantAssignment - it's not redundant, evaluation happens immediately
                     var vsProject = GetVsProject(project);
                     if (vsProject != null)
-                        installedAssembly = DoInstallAssemblyAsNuGetPackage(assemblyLocations, vsProject);
-                });
+                        location = DoInstallAssemblyAsNuGetPackage(assemblyLocations, vsProject);
+// ReSharper restore RedundantAssignment
+                }));
+            installedLocation = location;
 
-            return installedAssembly;
+            // Even if there's been an exception, return true to say that it's installed.
+            // What's happened is that we know we should import a nuget package, but it's
+            // failed. It's worse to then let the default fallback behaviour kick in (i.e.
+            // import a file reference to a nuget installed dll).
+            // It would be better if the ModuleReferencerService would find the first
+            // IModuleReferencer that can add the reference, and only allow that one to
+            // have a go - no fallback. If we can handle it, but it fails, then no-one
+            // else should get a go
+            return true;
         }
 
         private string DoInstallAssemblyAsNuGetPackage(IEnumerable<FileSystemPath> assemblyLocations, Project vsProject)

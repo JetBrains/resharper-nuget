@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-using System;
 using System.Collections.Generic;
+using JetBrains.Application;
 using JetBrains.Application.Components;
-using JetBrains.Application.Progress;
-using JetBrains.ProjectModel;
 using JetBrains.ProjectModel.Model2.Assemblies.Interfaces;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.Module;
+using JetBrains.TextControl;
 using JetBrains.Util;
 using System.Linq;
 
@@ -38,10 +37,14 @@ namespace JetBrains.ReSharper.Plugins.NuGet
         private const int NuGetModuleReferencerPriority = 100;
 
         private readonly NuGetApi nuget;
+        private readonly ITextControlManager textControlManager;
+        private readonly IShellLocks shellLocks;
 
-        public NuGetModuleReferencer(NuGetApi nuget)
+        public NuGetModuleReferencer(NuGetApi nuget, ITextControlManager textControlManager, IShellLocks shellLocks)
         {
             this.nuget = nuget;
+            this.textControlManager = textControlManager;
+            this.shellLocks = shellLocks;
         }
 
         public bool CanReferenceModule(IPsiModule module, IPsiModule moduleToReference)
@@ -61,11 +64,16 @@ namespace JetBrains.ReSharper.Plugins.NuGet
 
             var assemblyLocations = GetAllAssemblyLocations(moduleToReference);
             var projectModule = (IProjectPsiModule)module;
-            var packageLocation = nuget.InstallNuGetPackageFromAssemblyFiles(assemblyLocations, projectModule.Project);
 
-            PokeReSharpersAssemblyReferences(module, assemblyLocations, packageLocation, projectModule);
+            string packageLocation;
+            var handled = nuget.InstallNuGetPackageFromAssemblyFiles(assemblyLocations, projectModule.Project, out packageLocation);
+            if (handled)
+            {
+                Hacks.PokeReSharpersAssemblyReferences(module, assemblyLocations, packageLocation, projectModule);
+                Hacks.HandleFailureToReference(packageLocation, textControlManager, shellLocks);
+            }
 
-            return !string.IsNullOrEmpty(packageLocation);
+            return handled;
         }
 
         public bool ReferenceModuleWithType(IPsiModule module, ITypeElement typeToReference)
@@ -100,25 +108,6 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             // ProjectModel instead of the PSI, and get all file locations of the IAssembly
             return (from f in projectModelAssembly.GetFiles()
                     select f.Location).ToList();
-        }
-
-        private static void PokeReSharpersAssemblyReferences(IPsiModule module, IEnumerable<FileSystemPath> assemblyLocations, string packageLocation,
-                                                             IProjectPsiModule projectModule)
-        {
-            if (string.IsNullOrEmpty(packageLocation))
-                return;
-
-            // TODO: I wish we didn't have to do this
-            // When NuGet references the assemblies, they are queued up to be processed, but after
-            // this method completes. Which means the import type part of the process fails to find
-            // the type to import. We force an update which works through the system early. It would
-            // be nice to find out if we can process the proper import notifications instead
-            using (var cookie = module.GetSolution().CreateTransactionCookie(DefaultAction.Commit, "ReferenceModuleWithType", NullProgressIndicator.Instance))
-            {
-                var assemblyLocation = assemblyLocations.FirstOrDefault(l => l.FullPath.StartsWith(packageLocation, StringComparison.InvariantCultureIgnoreCase));
-                if (!assemblyLocation.IsNullOrEmpty())
-                    cookie.AddAssemblyReference(projectModule.Project, assemblyLocation);
-            }
         }
     }
 }
