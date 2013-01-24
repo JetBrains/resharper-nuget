@@ -14,8 +14,7 @@ This plugin makes ReSharper invoke NuGet when adding a reference to an assembly 
 
 If you wish to just install a copy of the plugins without building yourself:
 
-- Visit the [downloads section on GitHub](https://github.com/JetBrains/resharper-nuget/downloads)
-- Download the latest zip file
+- Download the latest zip file: [resharper-nuget.1.1.zip](http://download.jetbrains.com/resharper/plugins/resharper-nuget.1.1.zip)
 - Extract everything
 - Run the appropriate batch file for your version of ReSharper, e.g. Install-NuGetSupport.7.1.bat for ReSharper 7.1, or Install-NuGetSupport.6.0.bat for ReSharper 6.0
 
@@ -45,7 +44,7 @@ To build the source, you need the [ReSharper 7.1 SDK](http://www.jetbrains.com/r
 
 ## Version
 
-The current version is 1.1. It has been tested with Visual Studio 2012 and 2010, and supports ReSharper 7.1.1 and 6.1.1.
+The current version is 1.1. It has been tested with Visual Studio 2012 and 2010, and supports ReSharper 7.1.1 and 6.1.1. See the [ReleaseNotes wiki page](https://github.com/JetBrains/resharper-nuget/wiki/ReleaseNotes) for more details.
 
 ## Contributing ##
 
@@ -56,4 +55,5 @@ Feel free to [raise issues on GitHub](https://github.com/JetBrains/resharper-nug
 Please see the [Issues tab on JetBrains' GitHub page](https://github.com/JetBrains/resharper-nuget/issues).
 
 
-
+
+
