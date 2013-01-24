@@ -23,10 +23,12 @@
         <UpdateInfo>
           <InformationUri>https://github.com/JetBrains/resharper-nuget/wiki/Release-Notes</InformationUri>
           <Title>
-            <xsl:value-of select="concat('NuGet Support for ReSharper ', $LatestMajor, '.', $LatestMinor, '.', $LatestBuild, ' Released')"/>
+            <xsl:value-of select="concat('NuGet Support for ReSharper ', $LatestMajor, '.', $LatestMinor, '.', $LatestBuild, ' Released')" />
           </Title>
           <Description>A minor upgrade is available.</Description>
-          <DownloadUri>???</DownloadUri>
+          <DownloadUri>
+            <xsl:value-of select="concat('http://download.jetbrains.com/resharper/plugins/resharper-nuget.', $LatestMajor, '.', $LatestMinor, '.zip')" />
+          </DownloadUri>
           <CompanyName>JetBrains</CompanyName>
           <ProductName>NuGet Support</ProductName>
           <ProductVersion><xsl:value-of select="concat($LatestMajor, '.', $LatestMinor, '.', $LatestBuild, '.0')"/></ProductVersion>
