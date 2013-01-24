@@ -44,7 +44,7 @@ To build the source, you need the [ReSharper 7.1 SDK](http://www.jetbrains.com/r
 
 ## Version
 
-The current version is 1.1. It has been tested with Visual Studio 2012 and 2010, and supports ReSharper 7.1.1 and 6.1.1. See the [ReleaseNotes wiki page](https://github.com/JetBrains/resharper-nuget/wiki/ReleaseNotes) for more details.
+The current version is 1.1. It has been tested with Visual Studio 2012 and 2010, and supports ReSharper 7.1.1 and 6.1.1. See the [ReleaseNotes wiki page](https://github.com/JetBrains/resharper-nuget/wiki/Release-Notes) for more details.
 
 ## Contributing ##
 
