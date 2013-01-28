@@ -86,33 +86,53 @@ namespace JetBrains.ReSharper.Plugins.NuGet
                 return false;
 
             // We're talking to NuGet via COM. Make sure we're on the UI thread
-            string location = null;
-            threading.Dispatcher.Invoke("NuGet", () => Logger.Catch(() =>
+            string location = string.Empty;
+            bool handled = false;
+            threading.Dispatcher.Invoke("NuGet", () =>
                 {
-// ReSharper disable RedundantAssignment - it's not redundant, evaluation happens immediately
-                    var vsProject = GetVsProject(project);
-                    if (vsProject != null)
-                        location = DoInstallAssemblyAsNuGetPackage(assemblyLocations, vsProject);
-// ReSharper restore RedundantAssignment
-                }));
+                    handled = DoInstallAssemblyAsNuGetPackage(assemblyLocations, project, out location);
+                });
             installedLocation = location;
 
-            // Even if there's been an exception, return true to say that it's installed.
-            // What's happened is that we know we should import a nuget package, but it's
-            // failed. It's worse to then let the default fallback behaviour kick in (i.e.
-            // import a file reference to a nuget installed dll).
-            // It would be better if the ModuleReferencerService would find the first
-            // IModuleReferencer that can add the reference, and only allow that one to
-            // have a go - no fallback. If we can handle it, but it fails, then no-one
-            // else should get a go
-            return true;
+            return handled;
         }
 
-        private string DoInstallAssemblyAsNuGetPackage(IEnumerable<FileSystemPath> assemblyLocations, Project vsProject)
+        private bool DoInstallAssemblyAsNuGetPackage(IEnumerable<FileSystemPath> assemblyLocations, IProject project,
+                                                     out string installedLocation)
         {
+            var handled = false;
+            installedLocation = null;
+
+            try
+            {
+                var vsProject = GetVsProject(project);
+                if (vsProject != null)
+                    handled = DoInstallAssemblyAsNuGetPackage(assemblyLocations, vsProject, out installedLocation);
+            }
+            catch (Exception e)
+            {
+                // Something went wrong while trying to install a NuGet package. Don't
+                // let the default module referencers add a file reference, so tell
+                // ReSharper that we handled it
+                Logger.LogException("Failed to install NuGet package", e);
+                handled = true;
+            }
+
+            return handled;
+        }
+
+
+        private bool DoInstallAssemblyAsNuGetPackage(IEnumerable<FileSystemPath> assemblyLocations, Project vsProject, 
+                                                     out string installedLocation)
+        {
+            installedLocation = string.Empty;
+
             var metadata = GetPackageFromAssemblyLocations(assemblyLocations);
             if (metadata == null)
-                return null;
+            {
+                // Not a NuGet package, we didn't handle this
+                return false;
+            }
 
             // We need to get the repository path from the installed package. Sadly, this means knowing that
             // the package is installed one directory below the repository. Just a small crack in the black box.
@@ -120,7 +140,10 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             // us an aggregate of the current package sources, rather than using the local repo as a source)
             var repositoryPath = Path.GetDirectoryName(metadata.InstallPath);
             vsPackageInstaller.InstallPackage(repositoryPath, vsProject, metadata.Id, (Version)null, false);
-            return metadata.InstallPath;
+            installedLocation = metadata.InstallPath;
+
+            // Successfully installed, we handled it
+            return true;
         }
 
         private IVsPackageMetadata GetPackageFromAssemblyLocations(IEnumerable<FileSystemPath> assemblyLocations)
