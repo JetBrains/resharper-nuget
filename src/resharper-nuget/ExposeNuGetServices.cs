@@ -22,7 +22,11 @@ namespace JetBrains.ReSharper.Plugins.NuGet
     [WrapVsInterfaces]
     public class ExposeNuGetServices : IExposeVsServices
     {
+#if RESHARPER_8
+        public void Register(VsServiceResolver.VsServiceMap map)
+#else
         public void Register(VsServiceProviderComponentContainer.VsServiceMap map)
+#endif
         {
             if (!map.IsRegistered<IComponentModel>())
                 map.QueryService<SComponentModel>().As<IComponentModel>();

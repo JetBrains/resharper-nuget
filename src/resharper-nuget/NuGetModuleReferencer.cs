@@ -19,7 +19,12 @@ using JetBrains.Application;
 using JetBrains.Application.Components;
 using JetBrains.ProjectModel.Model2.Assemblies.Interfaces;
 using JetBrains.ReSharper.Psi;
+#if RESHARPER_8
+using JetBrains.Metadata.Reader.API;
+using JetBrains.ReSharper.Psi.Modules;
+#else
 using JetBrains.ReSharper.Psi.Module;
+#endif
 using JetBrains.TextControl;
 using JetBrains.Util;
 using System.Linq;
@@ -80,6 +85,18 @@ namespace JetBrains.ReSharper.Plugins.NuGet
         {
             return ReferenceModule(module, typeToReference.Module);
         }
+
+#if RESHARPER_8
+        public bool CanReferenceModule(IPsiModule module, IPsiModule moduleToReference, IModuleReferenceResolveContext context)
+        {
+            return CanReferenceModule(module, moduleToReference);
+        }
+
+        public bool ReferenceModuleWithType(IPsiModule module, ITypeElement typeToReference, IModuleReferenceResolveContext resolveContext)
+        {
+            return ReferenceModule(module, typeToReference.Module);
+        }
+#endif
 
         private static bool IsProjectModule(IPsiModule module)
         {
