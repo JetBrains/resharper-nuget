@@ -6,6 +6,7 @@
     <title>NuGet support for ReSharper</title>
     <authors>JetBrains s.r.o.</authors>
     <iconUrl>http://resharper-plugins.jetbrains.com/Content/Images/packageReSharper.png</iconUrl>
+    <projectUrl>https://github.com/JetBrains/resharper-nuget/wiki</projectUrl>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Adds support for NuGet references in ReSharper</description>
