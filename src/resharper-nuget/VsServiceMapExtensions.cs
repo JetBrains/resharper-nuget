@@ -21,7 +21,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
     public static class VsServiceMapExtensions
     {
 #if RESHARPER_8
-        public static bool IsRegistered<T>(this VsServiceProviderResolver.VsServiceMap map)
+        public static bool IsRegistered<T>(this VsServiceResolver.VsServiceMap map)
 #else
         public static bool IsRegistered<T>(this VsServiceProviderComponentContainer.VsServiceMap map)
 #endif

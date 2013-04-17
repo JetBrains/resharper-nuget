@@ -23,7 +23,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
     public class ExposeNuGetServices : IExposeVsServices
     {
 #if RESHARPER_8
-        public void Register(VsServiceProviderResolver.VsServiceMap map)
+        public void Register(VsServiceResolver.VsServiceMap map)
 #else
         public void Register(VsServiceProviderComponentContainer.VsServiceMap map)
 #endif
