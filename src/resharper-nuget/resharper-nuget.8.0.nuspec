@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>ReSharper.NuGet</id>
+    <version>1.2.0</version>
+    <title>NuGet support for ReSharper</title>
+    <authors>JetBrains s.r.o.</authors>
+    <iconUrl>http://resharper-plugins.jetbrains.com/Content/Images/packageReSharper.png</iconUrl>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Adds support for NuGet references in ReSharper</description>
+    <copyright>Copyright 2012 JetBrains s.r.o.</copyright>
+    <dependencies>
+      <dependency id="ReSharper" version="8.0" />
+    </dependencies>
+    <tags>NuGet</tags>
+  </metadata>
+  <files>
+    <file src="bin\$Configuration$\**\*.*" target="ReSharper\v8.0\" />
+  </files>
+</package>
