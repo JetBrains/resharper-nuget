@@ -23,6 +23,9 @@ using JetBrains.Application.Components;
 using JetBrains.ProjectModel;
 using JetBrains.Threading;
 using JetBrains.Util;
+#if RESHARPER_8
+using JetBrains.Util.Logging;
+#endif
 using JetBrains.VsIntegration.ProjectModel;
 using Microsoft.VisualStudio.ComponentModelHost;
 using NuGet.VisualStudio;
@@ -35,16 +38,13 @@ namespace JetBrains.ReSharper.Plugins.NuGet
     [ShellComponent(ProgramConfigurations.VS_ADDIN)]
     public class NuGetApi
     {
-        private readonly VSSolutionManager vsSolutionManager;
         private readonly IThreading threading;
         private readonly IVsPackageInstallerServices vsPackageInstallerServices;
         private readonly IVsPackageInstaller vsPackageInstaller;
 
         public NuGetApi(IComponentModel componentModel,
-                        VSSolutionManager vsSolutionManager,
                         IThreading threading)
         {
-            this.vsSolutionManager = vsSolutionManager;
             this.threading = threading;
             try
             {
@@ -156,7 +156,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
 
         private Project GetVsProject(IProject project)
         {
-            var projectModelSynchronizer = vsSolutionManager.GetProjectModelSynchronizer(project.GetSolution());
+            var projectModelSynchronizer = SolutionEx.GetComponent<ProjectModelSynchronizer>(project.GetSolution());
             var projectInfo = projectModelSynchronizer.GetProjectInfoByProject(project);
             return projectInfo != null ? projectInfo.GetExtProject() : null;
         }

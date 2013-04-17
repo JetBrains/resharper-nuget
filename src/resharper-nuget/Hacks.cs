@@ -22,7 +22,11 @@ using JetBrains.Application;
 using JetBrains.Application.Progress;
 using JetBrains.DataFlow;
 using JetBrains.ProjectModel;
+#if RESHARPER_8
+using JetBrains.ReSharper.Psi.Modules;
+#else
 using JetBrains.ReSharper.Psi;
+#endif
 using JetBrains.TextControl;
 using JetBrains.Threading;
 using JetBrains.UI.Application;
