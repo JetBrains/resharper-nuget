@@ -42,18 +42,17 @@ namespace JetBrains.ReSharper.Plugins.NuGet
         private readonly IVsPackageInstallerServices vsPackageInstallerServices;
         private readonly IVsPackageInstaller vsPackageInstaller;
 
-        public NuGetApi(IComponentModel componentModel,
-                        IThreading threading)
+        public NuGetApi(IComponentModel componentModel, IThreading threading)
         {
             this.threading = threading;
             try
             {
-                vsPackageInstallerServices = componentModel.GetService<IVsPackageInstallerServices>();
-                vsPackageInstaller = componentModel.GetService<IVsPackageInstaller>();
+                vsPackageInstallerServices = componentModel.GetExtensions<IVsPackageInstallerServices>().SingleOrDefault();
+                vsPackageInstaller = componentModel.GetExtensions<IVsPackageInstaller>().SingleOrDefault();
             }
             catch (Exception e)
             {
-                Logger.LogException("Unable to get NuGet interfaces. Is NuGet installed?", e);
+                Logger.LogException("Unable to get NuGet interfaces.", e);
             }
         }
 
