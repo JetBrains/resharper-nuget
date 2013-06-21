@@ -32,6 +32,8 @@
 .builds
 *.dotCover
 
+*.nupkg
+
 # ReSharper is a .NET coding add-in
 _ReSharper*
 _dotCover*
