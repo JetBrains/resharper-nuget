@@ -120,7 +120,6 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             return handled;
         }
 
-
         private bool DoInstallAssemblyAsNuGetPackage(IEnumerable<FileSystemPath> assemblyLocations, Project vsProject, 
                                                      out string installedLocation)
         {
@@ -137,10 +136,12 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             // the package is installed one directory below the repository. Just a small crack in the black box.
             // (We can pass "All" as the package source, rather than the repository path, but that would give
             // us an aggregate of the current package sources, rather than using the local repo as a source)
-			var installPath = Path.GetFullPath(metadata.InstallPath);
-			var repositoryPath = Path.GetDirectoryName(installPath);
+            // Also, make sure we're dealing with a canonical path, in case the nuget.config has a repository
+            // path defined as a relative path
+            var canonicalInstallPath = Path.GetFullPath(metadata.InstallPath);
+            var repositoryPath = Path.GetDirectoryName(canonicalInstallPath);
             vsPackageInstaller.InstallPackage(repositoryPath, vsProject, metadata.Id, (Version)null, false);
-			installedLocation = installPath;
+            installedLocation = canonicalInstallPath;
 
             // Successfully installed, we handled it
             return true;
@@ -150,13 +151,14 @@ namespace JetBrains.ReSharper.Plugins.NuGet
         {
             return (from p in vsPackageInstallerServices.GetInstalledPackages()
                     from l in assemblyLocations
-					where l.FullPath.StartsWith(Path.GetFullPath(p.InstallPath), StringComparison.InvariantCultureIgnoreCase)
+                    let canonicalInstallPath = Path.GetFullPath(p.InstallPath)
+                    where l.FullPath.StartsWith(canonicalInstallPath, StringComparison.InvariantCultureIgnoreCase)
                     select p).FirstOrDefault();
         }
 
         private Project GetVsProject(IProject project)
         {
-            var projectModelSynchronizer = SolutionEx.GetComponent<ProjectModelSynchronizer>(project.GetSolution());
+            var projectModelSynchronizer = project.GetSolution().GetComponent<ProjectModelSynchronizer>();
             var projectInfo = projectModelSynchronizer.GetProjectInfoByProject(project);
             return projectInfo != null ? projectInfo.GetExtProject() : null;
         }
