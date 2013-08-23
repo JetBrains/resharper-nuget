@@ -19,6 +19,7 @@ using JetBrains.Application;
 using JetBrains.ProjectModel.Model2.Assemblies.Interfaces;
 using JetBrains.ReSharper.Psi;
 #if RESHARPER_8
+using JetBrains.Util.Logging;
 using JetBrains.ReSharper.Psi.Modules;
 #endif
 using JetBrains.TextControl;
@@ -46,14 +47,22 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             if (!IsProjectModule(module) || !IsAssemblyModule(moduleToReference))
                 return false;
 
+            Logger.LogMessage(LoggingLevel.VERBOSE, "[NUGET PLUGIN] Checking if module '{0}' is a nuget package", moduleToReference.DisplayName);
+
             var assemblyLocations = GetAllAssemblyLocations(moduleToReference);
-            return nuget.AreAnyAssemblyFilesNuGetPackages(assemblyLocations);
+            var canReference = nuget.AreAnyAssemblyFilesNuGetPackages(assemblyLocations);
+
+            Logger.LogMessage(LoggingLevel.VERBOSE, "[NUGET PLUGIN] Module '{0}' is {1}a nuget package", moduleToReference.DisplayName, canReference ? string.Empty : "NOT ");
+
+            return canReference;
         }
 
         public bool ReferenceModule(IPsiModule module, IPsiModule moduleToReference)
         {
             if (!IsProjectModule(module) || !IsAssemblyModule(moduleToReference))
                 return false;
+
+            Logger.LogMessage(LoggingLevel.VERBOSE, "[NUGET PLUGIN] Attempting to reference module '{0}' as a nuget package", moduleToReference.DisplayName);
 
             var assemblyLocations = GetAllAssemblyLocations(moduleToReference);
             var projectModule = (IProjectPsiModule)module;
@@ -65,6 +74,9 @@ namespace JetBrains.ReSharper.Plugins.NuGet
                 Hacks.PokeReSharpersAssemblyReferences(module, assemblyLocations, packageLocation, projectModule);
                 Hacks.HandleFailureToReference(packageLocation, textControlManager, shellLocks);
             }
+
+            if (handled)
+                Logger.LogMessage(LoggingLevel.VERBOSE, "[NUGET PLUGIN] Referenced module '{0}' as nuget package from '{1}'", moduleToReference.DisplayName, packageLocation);
 
             return handled;
         }

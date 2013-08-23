@@ -54,6 +54,9 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             {
                 Logger.LogException("Unable to get NuGet interfaces.", e);
             }
+
+            if (!IsNuGetAvailable)
+                Logger.LogError("[NUGET PLUGIN] Unable to get NuGet interfaces. No exception thrown");
         }
 
         private bool IsNuGetAvailable
@@ -71,6 +74,8 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             threading.Dispatcher.Invoke("NuGet", () =>
                 {
                     hasPackageAssembly = Logger.Catch(() => GetPackageFromAssemblyLocations(fileLocations) != null);
+                    if (!hasPackageAssembly)
+                        LogNoPackageFound(fileLocations);
                 });
 
             return hasPackageAssembly;
@@ -96,7 +101,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             return handled;
         }
 
-        private bool DoInstallAssemblyAsNuGetPackage(IEnumerable<FileSystemPath> assemblyLocations, IProject project,
+        private bool DoInstallAssemblyAsNuGetPackage(IList<FileSystemPath> assemblyLocations, IProject project,
                                                      out string installedLocation)
         {
             var handled = false;
@@ -120,7 +125,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             return handled;
         }
 
-        private bool DoInstallAssemblyAsNuGetPackage(IEnumerable<FileSystemPath> assemblyLocations, Project vsProject, 
+        private bool DoInstallAssemblyAsNuGetPackage(IList<FileSystemPath> assemblyLocations, Project vsProject, 
                                                      out string installedLocation)
         {
             installedLocation = string.Empty;
@@ -129,6 +134,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             if (metadata == null)
             {
                 // Not a NuGet package, we didn't handle this
+                LogNoPackageFound(assemblyLocations);
                 return false;
             }
 
@@ -145,6 +151,15 @@ namespace JetBrains.ReSharper.Plugins.NuGet
 
             // Successfully installed, we handled it
             return true;
+        }
+
+        private void LogNoPackageFound(IEnumerable<FileSystemPath> assemblyLocations)
+        {
+            if (!Logger.IsLoggingEnabled)
+                return;
+
+            var assemblies = assemblyLocations.AggregateString(", ", (builder, arg) => builder.Append(arg.QuoteIfNeeded()));
+            Logger.LogMessage(LoggingLevel.VERBOSE, "[NUGET PLUGIN] No package found for assemblies: {0}", assemblies);
         }
 
         private IVsPackageMetadata GetPackageFromAssemblyLocations(IEnumerable<FileSystemPath> assemblyLocations)
