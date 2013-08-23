@@ -65,7 +65,8 @@
     <Compile Include="ExposeNuGetServices.cs" />
     <Compile Include="Hacks.cs" />
     <Compile Include="NuGetApi.cs" />
-    <Compile Include="NuGetModuleReferencer.cs" />
+    <Compile Include="NuGetModuleReferencer.pre-8.0.cs" />
+    <Compile Include="NuGetModuleReferencerImpl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Updates\PluginLocalEnvironmentInfo.cs" />
     <Compile Include="Updates\UpdatesNotifier.cs" />

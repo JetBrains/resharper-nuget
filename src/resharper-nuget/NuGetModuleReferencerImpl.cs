@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright 2012 JetBrains s.r.o.
+ * Copyright 2012-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,10 @@
 
 using System.Collections.Generic;
 using JetBrains.Application;
-using JetBrains.Application.Components;
 using JetBrains.ProjectModel.Model2.Assemblies.Interfaces;
 using JetBrains.ReSharper.Psi;
 #if RESHARPER_8
-using JetBrains.Metadata.Reader.API;
 using JetBrains.ReSharper.Psi.Modules;
-#else
-using JetBrains.ReSharper.Psi.Module;
 #endif
 using JetBrains.TextControl;
 using JetBrains.Util;
@@ -31,30 +27,14 @@ using System.Linq;
 
 namespace JetBrains.ReSharper.Plugins.NuGet
 {
-    // We need to tell ReSharper's component model that we can only run as a VS addin,
-    // because we depend on an object that depends on an interface that is only available
-    // in Visual Studio. In other words, If we rely on a component marked VS_ADDIN, we
-    // must also be marked VS_ADDIN
-    [ModuleReferencer(ProgramConfigurations = ProgramConfigurations.VS_ADDIN, Priority = NuGetModuleReferencerPriority)]
-    public class NuGetModuleReferencer : IModuleReferencer
+    [PsiSharedComponent]
+    public class NuGetModuleReferencerImpl
     {
-#if RESHARPER_8
-
-        // ReSharper 8 flipped the priority comparison. It now has to be LESS
-        // than the GenericModuleReferencer's priority, so it comes first
-        private const int NuGetModuleReferencerPriority = -100;
-#else
-
-        // Must be greater than GenericModuleReferencer's priority. The referencers
-        // are in descending order
-        private const int NuGetModuleReferencerPriority = 100;
-#endif
-
         private readonly NuGetApi nuget;
         private readonly ITextControlManager textControlManager;
         private readonly IShellLocks shellLocks;
 
-        public NuGetModuleReferencer(NuGetApi nuget, ITextControlManager textControlManager, IShellLocks shellLocks)
+        public NuGetModuleReferencerImpl(NuGetApi nuget, ITextControlManager textControlManager, IShellLocks shellLocks)
         {
             this.nuget = nuget;
             this.textControlManager = textControlManager;
@@ -70,7 +50,6 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             return nuget.AreAnyAssemblyFilesNuGetPackages(assemblyLocations);
         }
 
-        // ReSharper 7.1
         public bool ReferenceModule(IPsiModule module, IPsiModule moduleToReference)
         {
             if (!IsProjectModule(module) || !IsAssemblyModule(moduleToReference))
@@ -89,23 +68,6 @@ namespace JetBrains.ReSharper.Plugins.NuGet
 
             return handled;
         }
-
-        public bool ReferenceModuleWithType(IPsiModule module, ITypeElement typeToReference)
-        {
-            return ReferenceModule(module, typeToReference.Module);
-        }
-
-#if RESHARPER_8
-        public bool CanReferenceModule(IPsiModule module, IPsiModule moduleToReference, IModuleReferenceResolveContext context)
-        {
-            return CanReferenceModule(module, moduleToReference);
-        }
-
-        public bool ReferenceModuleWithType(IPsiModule module, ITypeElement typeToReference, IModuleReferenceResolveContext resolveContext)
-        {
-            return ReferenceModule(module, typeToReference.Module);
-        }
-#endif
 
         private static bool IsProjectModule(IPsiModule module)
         {
