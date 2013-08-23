@@ -38,8 +38,17 @@ namespace JetBrains.ReSharper.Plugins.NuGet
     [ModuleReferencer(ProgramConfigurations = ProgramConfigurations.VS_ADDIN, Priority = NuGetModuleReferencerPriority)]
     public class NuGetModuleReferencer : IModuleReferencer
     {
-        // Must be greater than GenericModuleReferencer's priority
+#if RESHARPER_8
+
+        // ReSharper 8 flipped the priority comparison. It now has to be LESS
+        // than the GenericModuleReferencer's priority, so it comes first
+        private const int NuGetModuleReferencerPriority = -100;
+#else
+
+        // Must be greater than GenericModuleReferencer's priority. The referencers
+        // are in descending order
         private const int NuGetModuleReferencerPriority = 100;
+#endif
 
         private readonly NuGetApi nuget;
         private readonly ITextControlManager textControlManager;
@@ -57,7 +66,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             if (!IsProjectModule(module) || !IsAssemblyModule(moduleToReference))
                 return false;
 
-            var assemblyLocations = GetAllAssemblyLocations(module);
+            var assemblyLocations = GetAllAssemblyLocations(moduleToReference);
             return nuget.AreAnyAssemblyFilesNuGetPackages(assemblyLocations);
         }
 
