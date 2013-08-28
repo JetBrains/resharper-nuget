@@ -22,6 +22,7 @@ using JetBrains.Application;
 using JetBrains.Application.Progress;
 using JetBrains.DataFlow;
 using JetBrains.ProjectModel;
+using JetBrains.UI.Tooltips;
 #if RESHARPER_8
 using JetBrains.ReSharper.Psi.Modules;
 #else
@@ -38,10 +39,10 @@ namespace JetBrains.ReSharper.Plugins.NuGet
     {
         public static void PokeReSharpersAssemblyReferences(IPsiModule module,
                                                             IEnumerable<FileSystemPath> assemblyLocations,
-                                                            string packageLocation,
+                                                            FileSystemPath packageLocation,
                                                             IProjectPsiModule projectModule)
         {
-            if (string.IsNullOrEmpty(packageLocation))
+            if (packageLocation.IsNullOrEmpty())
                 return;
 
             // TODO: I wish we didn't have to do this
@@ -53,14 +54,13 @@ namespace JetBrains.ReSharper.Plugins.NuGet
                                       .CreateTransactionCookie(DefaultAction.Commit, "ReferenceModuleWithType",
                                                                NullProgressIndicator.Instance))
             {
-                var assemblyLocation = assemblyLocations.FirstOrDefault(
-                    l => l.FullPath.StartsWith(packageLocation, StringComparison.InvariantCultureIgnoreCase));
+                var assemblyLocation = assemblyLocations.FirstOrDefault(packageLocation.IsPrefixOf);
                 if (!assemblyLocation.IsNullOrEmpty())
                     cookie.AddAssemblyReference(projectModule.Project, assemblyLocation);
             }
         }
 
-        public static void HandleFailureToReference(string packageLocation, ITextControlManager textControlManager, IShellLocks shellLocks)
+        public static void HandleFailureToReference(FileSystemPath packageLocation, Lifetime lifetime, ITextControlManager textControlManager, IShellLocks shellLocks, ITooltipManager tooltipManager, IActionManager actionManager)
         {
             // TODO: Wish we didn't have to do this, either
             // If we failed to install the package, it's because something has gone wrong,
@@ -75,17 +75,13 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             // we shouldn't see this very often, although I've probably just jinxed it now...
             //
             // Ideally, ReSharper should provide a better error mechanism as part of IModuleReferencer
-            if (string.IsNullOrEmpty(packageLocation))
+            if (packageLocation.IsNullOrEmpty())
             {
                 var textControl = textControlManager.FocusedTextControl.Value;
                 if (textControl != null)
                 {
-                    var shell = Shell.Instance;
                     shellLocks.Queue("Failed to import type",
-                                     () => shell.Components.Tooltips().ShowAtCaret(EternalLifetime.Instance,
-                                                                                   "Failed to add NuGet package.",
-                                                                                   textControl, shellLocks,
-                                                                                   shell.GetComponent<IActionManager>()));
+                                     () => tooltipManager.ShowAtCaret(lifetime, "Failed to add NuGet package.", textControl, shellLocks, actionManager));
                 }
             }
         }

@@ -16,10 +16,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using EnvDTE;
-using JetBrains.Application;
 using JetBrains.Application.Components;
+using JetBrains.DataFlow;
 using JetBrains.ProjectModel;
 using JetBrains.Threading;
 using JetBrains.Util;
@@ -35,20 +34,28 @@ namespace JetBrains.ReSharper.Plugins.NuGet
 {
     // We depend on IComponentModel, which lives in a VS assembly, so tell ReSharper
     // that we can only load as part of a VS addin
-    [ShellComponent(ProgramConfigurations.VS_ADDIN)]
+    [SolutionComponent(ProgramConfigurations.VS_ADDIN)]
     public class NuGetApi
     {
         private readonly IThreading threading;
+        private readonly ProjectModelSynchronizer projectModelSynchronizer;
         private readonly IVsPackageInstallerServices vsPackageInstallerServices;
         private readonly IVsPackageInstaller vsPackageInstaller;
+        private readonly IVsPackageInstallerEvents vsPackageInstallerEvents;
+        private readonly object syncObject = new object();
+        private ILookup<string, FileSystemPath> installedPackages; // there can be several versions of one package (different versions)
 
-        public NuGetApi(IComponentModel componentModel, IThreading threading)
+        private static ILookup<string, FileSystemPath> emptyLookup = ToLookup(EmptyList<IVsPackageMetadata>.InstanceList);
+
+        public NuGetApi(Lifetime lifetime, IComponentModel componentModel, IThreading threading, ProjectModelSynchronizer projectModelSynchronizer)
         {
             this.threading = threading;
+            this.projectModelSynchronizer = projectModelSynchronizer;
             try
             {
                 vsPackageInstallerServices = componentModel.GetExtensions<IVsPackageInstallerServices>().SingleOrDefault();
                 vsPackageInstaller = componentModel.GetExtensions<IVsPackageInstaller>().SingleOrDefault();
+                vsPackageInstallerEvents = componentModel.GetExtensions<IVsPackageInstallerEvents>().SingleOrDefault();
             }
             catch (Exception e)
             {
@@ -56,12 +63,55 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             }
 
             if (!IsNuGetAvailable)
+            {
                 Logger.LogError("[NUGET PLUGIN] Unable to get NuGet interfaces. No exception thrown");
+                return;
+            }
+
+            lifetime.AddBracket(
+              () => vsPackageInstallerEvents.PackageInstalled += RecalcInstalledPackages,
+              () => vsPackageInstallerEvents.PackageInstalled -= RecalcInstalledPackages);
+          
+          lifetime.AddBracket(
+              () => vsPackageInstallerEvents.PackageUninstalled += RecalcInstalledPackages,
+              () => vsPackageInstallerEvents.PackageUninstalled -= RecalcInstalledPackages);
+
+          RecalcInstalledPackages(null);
+        }
+
+        private static ILookup<string, FileSystemPath> ToLookup(IEnumerable<IVsPackageMetadata> packages)
+        {
+          return packages.ToLookup(_ => _.Id, _ => new FileSystemPath(_.InstallPath), StringComparer.OrdinalIgnoreCase);
+        }
+
+        private void RecalcInstalledPackages(IVsPackageMetadata metadata)
+        {
+            if (!IsNuGetAvailable)
+            {
+              lock (syncObject)
+              {
+                installedPackages = emptyLookup;
+              }
+              return;
+            }
+
+            try
+            {
+              lock (syncObject)
+              {
+                installedPackages = ToLookup(vsPackageInstallerServices.GetInstalledPackages());
+              }
+            }
+            catch (Exception ex)
+            {
+              installedPackages = emptyLookup;
+              Logger.LogException("RecalcInstalledPackages", ex);
+            }
         }
 
         private bool IsNuGetAvailable
         {
-            get { return vsPackageInstallerServices != null && vsPackageInstaller != null; }
+            get { return vsPackageInstallerServices != null && vsPackageInstaller != null && vsPackageInstallerEvents!= null; }
         }
 
         public bool AreAnyAssemblyFilesNuGetPackages(IList<FileSystemPath> fileLocations)
@@ -69,43 +119,38 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             if (!IsNuGetAvailable || fileLocations.Count == 0)
                 return false;
 
-            // We're talking to NuGet via COM. Make sure we're on the UI thread
-            var hasPackageAssembly = false;
-            threading.Dispatcher.Invoke("NuGet", () =>
-                {
-                    hasPackageAssembly = Logger.Catch(() => GetPackageFromAssemblyLocations(fileLocations) != null);
-                    if (!hasPackageAssembly)
-                        LogNoPackageFound(fileLocations);
-                });
+            FileSystemPath installedLocation;
+            var hasPackageAssembly = GetPackageFromAssemblyLocations(fileLocations, out installedLocation) != null;
+            if (!hasPackageAssembly)
+                LogNoPackageFound(fileLocations);
 
             return hasPackageAssembly;
         }
 
         // Yeah, that's an out parameter. Bite me.
-        public bool InstallNuGetPackageFromAssemblyFiles(IList<FileSystemPath> assemblyLocations, IProject project, out string installedLocation)
+        public bool InstallNuGetPackageFromAssemblyFiles(IList<FileSystemPath> assemblyLocations, IProject project, out FileSystemPath installedLocation)
         {
-            installedLocation = null;
+            installedLocation = FileSystemPath.Empty;
 
             if (!IsNuGetAvailable || assemblyLocations.Count == 0)
                 return false;
 
             // We're talking to NuGet via COM. Make sure we're on the UI thread
-            string location = string.Empty;
-            bool handled = false;
+            var location = FileSystemPath.Empty;
+            var handled = false;
             threading.Dispatcher.Invoke("NuGet", () =>
-                {
-                    handled = DoInstallAssemblyAsNuGetPackage(assemblyLocations, project, out location);
-                });
+            {
+                handled = DoInstallAssemblyAsNuGetPackage(assemblyLocations, project, out location);
+            });
             installedLocation = location;
 
             return handled;
         }
 
-        private bool DoInstallAssemblyAsNuGetPackage(IList<FileSystemPath> assemblyLocations, IProject project,
-                                                     out string installedLocation)
+        private bool DoInstallAssemblyAsNuGetPackage(IList<FileSystemPath> assemblyLocations, IProject project, out FileSystemPath installedLocation)
         {
             var handled = false;
-            installedLocation = null;
+            installedLocation = FileSystemPath.Empty;
 
             try
             {
@@ -125,13 +170,10 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             return handled;
         }
 
-        private bool DoInstallAssemblyAsNuGetPackage(IList<FileSystemPath> assemblyLocations, Project vsProject, 
-                                                     out string installedLocation)
+        private bool DoInstallAssemblyAsNuGetPackage(IList<FileSystemPath> assemblyLocations, Project vsProject, out FileSystemPath installedLocation)
         {
-            installedLocation = string.Empty;
-
-            var metadata = GetPackageFromAssemblyLocations(assemblyLocations);
-            if (metadata == null)
+            var id = GetPackageFromAssemblyLocations(assemblyLocations, out installedLocation);
+            if (id == null)
             {
                 // Not a NuGet package, we didn't handle this
                 LogNoPackageFound(assemblyLocations);
@@ -144,10 +186,8 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             // us an aggregate of the current package sources, rather than using the local repo as a source)
             // Also, make sure we're dealing with a canonical path, in case the nuget.config has a repository
             // path defined as a relative path
-            var canonicalInstallPath = Path.GetFullPath(metadata.InstallPath);
-            var repositoryPath = Path.GetDirectoryName(canonicalInstallPath);
-            vsPackageInstaller.InstallPackage(repositoryPath, vsProject, metadata.Id, (Version)null, false);
-            installedLocation = canonicalInstallPath;
+            var repositoryPath = installedLocation.Directory;
+            vsPackageInstaller.InstallPackage(repositoryPath.FullPath, vsProject, id, default(string), false);
 
             // Successfully installed, we handled it
             return true;
@@ -162,20 +202,29 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             Logger.LogMessage(LoggingLevel.VERBOSE, "[NUGET PLUGIN] No package found for assemblies: {0}", assemblies);
         }
 
-        private IVsPackageMetadata GetPackageFromAssemblyLocations(IEnumerable<FileSystemPath> assemblyLocations)
+        private string GetPackageFromAssemblyLocations(IList<FileSystemPath> assemblyLocations, out FileSystemPath installedLocation)
         {
-            return (from p in vsPackageInstallerServices.GetInstalledPackages()
-                    from l in assemblyLocations
-                    let canonicalInstallPath = Path.GetFullPath(p.InstallPath)
-                    where l.FullPath.StartsWith(canonicalInstallPath, StringComparison.InvariantCultureIgnoreCase)
-                    select p).FirstOrDefault();
+            lock (syncObject)
+            {
+                installedLocation = FileSystemPath.Empty;
+                foreach (var installedPackage in installedPackages)
+                foreach (var installedPackageLocation in installedPackage)
+                foreach (var assemblyLocation in assemblyLocations)
+                {
+                    if (installedPackageLocation.IsPrefixOf(assemblyLocation))
+                    {
+                        installedLocation = installedPackageLocation;
+                        return installedPackage.Key;
+                    }
+                }
+                return null;
+            }
         }
 
         private Project GetVsProject(IProject project)
         {
-            var projectModelSynchronizer = project.GetSolution().GetComponent<ProjectModelSynchronizer>();
-            var projectInfo = projectModelSynchronizer.GetProjectInfoByProject(project);
-            return projectInfo != null ? projectInfo.GetExtProject() : null;
+          var projectInfo = projectModelSynchronizer.GetProjectInfoByProject(project);
+          return projectInfo != null ? projectInfo.GetExtProject() : null;
         }
     }
 }

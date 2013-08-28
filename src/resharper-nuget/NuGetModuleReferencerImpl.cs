@@ -15,31 +15,39 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
+using JetBrains.ActionManagement;
 using JetBrains.Application;
+using JetBrains.DataFlow;
+using JetBrains.ProjectModel;
 using JetBrains.ProjectModel.Model2.Assemblies.Interfaces;
 using JetBrains.ReSharper.Psi;
+using JetBrains.UI.Tooltips;
 #if RESHARPER_8
 using JetBrains.Util.Logging;
 using JetBrains.ReSharper.Psi.Modules;
 #endif
 using JetBrains.TextControl;
 using JetBrains.Util;
-using System.Linq;
 
 namespace JetBrains.ReSharper.Plugins.NuGet
 {
     [PsiSharedComponent]
     public class NuGetModuleReferencerImpl
     {
-        private readonly NuGetApi nuget;
+        private readonly Lifetime lifetime;
         private readonly ITextControlManager textControlManager;
         private readonly IShellLocks shellLocks;
+        private readonly ITooltipManager tooltipManager;
+        private readonly IActionManager actionManager;
 
-        public NuGetModuleReferencerImpl(NuGetApi nuget, ITextControlManager textControlManager, IShellLocks shellLocks)
+        public NuGetModuleReferencerImpl(Lifetime lifetime, ITextControlManager textControlManager, IShellLocks shellLocks, ITooltipManager tooltipManager, IActionManager actionManager)
         {
-            this.nuget = nuget;
+            this.lifetime = lifetime;
             this.textControlManager = textControlManager;
             this.shellLocks = shellLocks;
+            this.tooltipManager = tooltipManager;
+            this.actionManager = actionManager;
         }
 
         public bool CanReferenceModule(IPsiModule module, IPsiModule moduleToReference)
@@ -50,7 +58,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             Logger.LogMessage(LoggingLevel.VERBOSE, "[NUGET PLUGIN] Checking if module '{0}' is a nuget package", moduleToReference.DisplayName);
 
             var assemblyLocations = GetAllAssemblyLocations(moduleToReference);
-            var canReference = nuget.AreAnyAssemblyFilesNuGetPackages(assemblyLocations);
+            var canReference = module.GetSolution().GetComponent<NuGetApi>().AreAnyAssemblyFilesNuGetPackages(assemblyLocations);
 
             Logger.LogMessage(LoggingLevel.VERBOSE, "[NUGET PLUGIN] Module '{0}' is {1}a nuget package", moduleToReference.DisplayName, canReference ? string.Empty : "NOT ");
 
@@ -67,12 +75,12 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             var assemblyLocations = GetAllAssemblyLocations(moduleToReference);
             var projectModule = (IProjectPsiModule)module;
 
-            string packageLocation;
-            var handled = nuget.InstallNuGetPackageFromAssemblyFiles(assemblyLocations, projectModule.Project, out packageLocation);
+            FileSystemPath packageLocation;
+            var handled = module.GetSolution().GetComponent<NuGetApi>().InstallNuGetPackageFromAssemblyFiles(assemblyLocations, projectModule.Project, out packageLocation);
             if (handled)
             {
                 Hacks.PokeReSharpersAssemblyReferences(module, assemblyLocations, packageLocation, projectModule);
-                Hacks.HandleFailureToReference(packageLocation, textControlManager, shellLocks);
+                Hacks.HandleFailureToReference(packageLocation, lifetime, textControlManager, shellLocks, tooltipManager, actionManager);
             }
 
             if (handled)
@@ -106,8 +114,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
             // folder. This doesn't help us when trying to add NuGet references - we need to look
             // at all of the locations to try and find the NuGet package location. So we use the
             // ProjectModel instead of the PSI, and get all file locations of the IAssembly
-            return (from f in projectModelAssembly.GetFiles()
-                    select f.Location).ToList();
+            return projectModelAssembly.GetFiles().Select(f => f.Location).ToList();
         }
     }
 }

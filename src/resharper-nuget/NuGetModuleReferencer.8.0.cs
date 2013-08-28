@@ -49,8 +49,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
       return moduleReferencer.ReferenceModule(module, moduleToReference);
     }
 
-    public bool ReferenceModuleWithType(IPsiModule module, ITypeElement typeToReference,
-      IModuleReferenceResolveContext resolveContext)
+    public bool ReferenceModuleWithType(IPsiModule module, ITypeElement typeToReference, IModuleReferenceResolveContext resolveContext)
     {
       return ReferenceModule(module, typeToReference.Module);
     }
