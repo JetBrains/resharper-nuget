@@ -37,6 +37,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
     [SolutionComponent(ProgramConfigurations.VS_ADDIN)]
     public class NuGetApi
     {
+        private readonly ISolution solution;
         private readonly IThreading threading;
         private readonly ProjectModelSynchronizer projectModelSynchronizer;
         private readonly IVsPackageInstallerServices vsPackageInstallerServices;
@@ -45,10 +46,11 @@ namespace JetBrains.ReSharper.Plugins.NuGet
         private readonly object syncObject = new object();
         private ILookup<string, FileSystemPath> installedPackages; // there can be several versions of one package (different versions)
 
-        private static ILookup<string, FileSystemPath> emptyLookup = ToLookup(EmptyList<IVsPackageMetadata>.InstanceList);
+        private static readonly ILookup<string, FileSystemPath> emptyLookup = ToLookup(EmptyList<IVsPackageMetadata>.InstanceList);
 
-        public NuGetApi(Lifetime lifetime, IComponentModel componentModel, IThreading threading, ProjectModelSynchronizer projectModelSynchronizer)
+        public NuGetApi(ISolution solution, Lifetime lifetime, IComponentModel componentModel, IThreading threading, ProjectModelSynchronizer projectModelSynchronizer)
         {
+            this.solution = solution;
             this.threading = threading;
             this.projectModelSynchronizer = projectModelSynchronizer;
             try
@@ -86,7 +88,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
 
         private void RecalcInstalledPackages(IVsPackageMetadata metadata)
         {
-            if (!IsNuGetAvailable)
+            if (!IsNuGetAvailable || solution.IsTemporary)
             {
               lock (syncObject)
               {
