@@ -66,7 +66,7 @@ namespace JetBrains.ReSharper.Plugins.NuGet
 
             if (!IsNuGetAvailable)
             {
-                Logger.LogError("[NUGET PLUGIN] Unable to get NuGet interfaces. No exception thrown");
+                Logger.LogMessage(LoggingLevel.WARN, "[NUGET PLUGIN] Unable to get NuGet interfaces. No exception thrown");
                 return;
             }
 
