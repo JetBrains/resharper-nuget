@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>ReSharper.NuGet</id>
-    <version>1.3.0</version>
+    <version>1.3.500</version>
     <title>NuGet support for ReSharper</title>
     <authors>JetBrains</authors>
     <iconUrl>https://raw.github.com/JetBrains/resharper-nuget/master/icon.png</iconUrl>
@@ -10,8 +10,8 @@
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Adds support for NuGet references in ReSharper</description>
-    <releaseNotes>Added logging, and fixes for ReSharper 8.0</releaseNotes>
-    <copyright>Copyright 2012 JetBrains</copyright>
+    <releaseNotes>ReSharper 8.0 compatibility</releaseNotes>
+    <copyright>Copyright 2013 JetBrains</copyright>
     <dependencies>
       <dependency id="ReSharper" version="8.0" />
     </dependencies>
