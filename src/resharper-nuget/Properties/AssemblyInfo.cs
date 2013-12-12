@@ -25,7 +25,7 @@ using JetBrains.Application.PluginSupport;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("JetBrains")]
 [assembly: AssemblyProduct("JetBrains.ReSharper.Plugins.NuGet")]
-[assembly: AssemblyCopyright("Copyright © JetBrains, 2012")]
+[assembly: AssemblyCopyright("Copyright © JetBrains, 2013")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
