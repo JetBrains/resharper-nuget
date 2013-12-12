@@ -1,7 +1,10 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "resharper-nuget.8.0", "resharper-nuget\resharper-nuget.8.0.csproj", "{46BA1E0D-D8D3-4191-8216-3B1F35DB7733}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "resharper-nuget.8.1", "resharper-nuget.8.1\resharper-nuget.8.1.csproj", "{DE1A92E5-282E-4218-9E31-16398579C1C4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,6 +16,10 @@ Global
 		{46BA1E0D-D8D3-4191-8216-3B1F35DB7733}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{46BA1E0D-D8D3-4191-8216-3B1F35DB7733}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{46BA1E0D-D8D3-4191-8216-3B1F35DB7733}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE1A92E5-282E-4218-9E31-16398579C1C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE1A92E5-282E-4218-9E31-16398579C1C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE1A92E5-282E-4218-9E31-16398579C1C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE1A92E5-282E-4218-9E31-16398579C1C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
