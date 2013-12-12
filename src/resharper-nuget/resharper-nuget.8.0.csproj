@@ -73,7 +73,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="resharper-nuget.8.0.nuspec" />
+    <None Include="resharper-nuget.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="resharper-nuget-debugging.proj" />
