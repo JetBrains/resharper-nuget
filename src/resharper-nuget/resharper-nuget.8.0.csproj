@@ -72,7 +72,7 @@
     <Compile Include="VsServiceMapExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <None Include="packages.resharper-nuget.8.0.config" />
     <None Include="resharper-nuget.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
