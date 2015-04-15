@@ -1,6 +1,10 @@
 # resharper-nuget
 
-This plugin for ReSharper adds support for NuGet references to ReSharper. It supports ReSharper 7.1 and 6.1.
+This plugin for ReSharper adds support for NuGet references to ReSharper. It supports ReSharper 8.x, 7.1 and 6.1.
+
+## DEPRECATED
+
+Please note that this plugin is now deprecated. The functionality has been rolled into the main product as of ReSharper 9.1. This repo is left as a sample (albeit slightly out of date).
 
 ## What does it do? ##
 
