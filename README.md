@@ -1,3 +1,5 @@
+[![obsolete JetBrains project](http://jb.gg/badges/obsolete-flat-square.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+
 # resharper-nuget
 
 This plugin for ReSharper adds support for NuGet references to ReSharper. It supports ReSharper 8.x, 7.1 and 6.1.
